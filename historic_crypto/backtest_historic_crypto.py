@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from historic_crypto import *
-from strategy_1 import strategy_1
+from strategy_1_historic_crypto import strategy_1
 
 
 def backtest(pairs, end_date, nb_days, amount, verbose=True):
@@ -29,7 +29,6 @@ def backtest(pairs, end_date, nb_days, amount, verbose=True):
     # calculate PnL for each pair
     pairs_pnl = {}
     for pair in selected_pairs:
-        print(pair)
         try:
             df = dict_df[pair]
         except:

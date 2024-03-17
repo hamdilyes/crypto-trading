@@ -1,35 +1,71 @@
 import pandas as pd
 
-from Historic_Crypto import HistoricalData
+##################################################################
+### strategy 1: buy and hold all pairs from start date + TP/SL ###
+##################################################################
 
-from historic_crypto import *
+def get_strategy_1(start_date, amount, prices, symbols, take_profit=None, stop_loss=None):
 
+    selected_symbols = symbols.copy()
+    portfolio = {}
 
-def strategy_1(pairs, start_date, end_date, amount):
-    """
-    Buy and hold strategy
-    Buy 'amount' USDT worth of each pair at the start date and sell at the end date
-    """
-    dict_df = {}
+    for symbol in selected_symbols:
+        # initialize volume
+        df = prices[symbol].copy()
+        df['volume'] = 0
+        df['pnl'] = 0
 
-    for pair in pairs:
-        # hourly data
+        # buy
+        trade_date = start_date
+        trade_amount = amount
         try:
-            data_start = HistoricalData(ticker=pair, granularity=3600, start_date=start_date, end_date=end_date_str(start_date, 60), verbose=False).retrieve_data()
-            data_end = HistoricalData(ticker=pair, granularity=3600, start_date=end_date, end_date=end_date_str(end_date, 60), verbose=False).retrieve_data()
+            trade_volume = trade_amount / df.loc[trade_date, 'price']
         except:
-            # print(f'Error retrieving data for {pair}')
+            selected_symbols.remove(symbol)
+            continue
+        df.loc[trade_date:, 'volume'] += trade_volume
+        df.loc[trade_date, 'pnl'] -= trade_amount
+
+        # stop loss
+        if stop_loss is not None:
+            sl_price = df.loc[trade_date, 'price'] * (1 - stop_loss/100)
+            for i in range(1, len(df)):
+                if df.iloc[i]['price'] <= sl_price:
+                    trade_date = df.index[i]
+                    trade_amount = df.loc[trade_date, 'volume'] * df.loc[trade_date, 'price']
+                    df.loc[trade_date:, 'volume'] = 0
+                    df.loc[trade_date, 'pnl'] += trade_amount
+                    break
+
+         # take profit
+        if take_profit is not None:
+            tp_price = df.loc[trade_date, 'price'] * (1 + take_profit/100)
+            for i in range(1, len(df)):
+                if df.iloc[i]['price'] >= tp_price:
+                    trade_date = df.index[i]
+                    trade_amount = df.loc[trade_date, 'volume'] * df.loc[trade_date, 'price']
+                    df.loc[trade_date:, 'volume'] = 0
+                    df.loc[trade_date, 'pnl'] += trade_amount
+                    break
+
+        # update value
+        df['value'] = df['volume'] * df['price']
+
+        # add to portfolio
+        portfolio[symbol] = df
+
+    # show portfolio value over time for all pairs aggregated
+    strategy_value, strategy_pnl = 0, 0
+    for symbol in selected_symbols:
+        try:
+            strategy_value += pd.DataFrame(portfolio[symbol]['value'])
+            strategy_pnl += pd.DataFrame(portfolio[symbol]['pnl'])
+        except:
             continue
 
-        data = pd.concat([data_start, data_end])
-        
-        data = data[['close']]
-        data = data.rename(columns={'close': 'price'})
-        data['action'] = [1, -1]
+    # portfolio value + PnL
+    strategy = pd.concat([strategy_value, strategy_pnl.cumsum()], axis=1)
+    strategy.columns = ['value', 'pnl']
+    strategy['total'] = strategy['value'] + strategy['pnl']
 
-        initial_price = data['price'].iloc[0]
-        data['base_currency_amount'] = amount / initial_price
-        
-        dict_df[pair] = data
-
-    return dict_df
+    return strategy
