@@ -6,10 +6,10 @@ import pandas as pd
 
 def get_strategy_1(start_date, amount, prices, symbols, take_profit=None, stop_loss=None):
 
-    selected_symbols = symbols.copy()
+    selected_symbols = []
     portfolio = {}
 
-    for symbol in selected_symbols:
+    for symbol in symbols:
         # initialize volume
         df = prices[symbol].copy()
         df['volume'] = 0
@@ -20,9 +20,10 @@ def get_strategy_1(start_date, amount, prices, symbols, take_profit=None, stop_l
         trade_amount = amount
         try:
             trade_volume = trade_amount / df.loc[trade_date, 'price']
+            selected_symbols.append(symbol)
         except:
-            selected_symbols.remove(symbol)
             continue
+        
         df.loc[trade_date:, 'volume'] += trade_volume
         df.loc[trade_date, 'pnl'] -= trade_amount
 
@@ -54,6 +55,10 @@ def get_strategy_1(start_date, amount, prices, symbols, take_profit=None, stop_l
         # add to portfolio
         portfolio[symbol] = df
 
+    if len(selected_symbols) == 0:
+        print('No data')
+        return None, None
+
     # show portfolio value over time for all pairs aggregated
     strategy_value, strategy_pnl = 0, 0
     for symbol in selected_symbols:
@@ -68,4 +73,7 @@ def get_strategy_1(start_date, amount, prices, symbols, take_profit=None, stop_l
     strategy.columns = ['value', 'pnl']
     strategy['total'] = strategy['value'] + strategy['pnl']
 
-    return strategy
+    print(len(selected_symbols))
+    print(selected_symbols)
+
+    return strategy, selected_symbols

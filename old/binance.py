@@ -22,16 +22,19 @@ def get_binance():
 exchange, markets, symbols = get_binance()
 
 
-def plot_daily_prices(crypto, n, exchange=exchange):
-    symbol = crypto + '/USDT'
-    pair = exchange.fetch_ohlcv(symbol, '1d', limit=n)
-
-    pair = pd.DataFrame(pair, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-    pair['timestamp'] = pd.to_datetime(pair['timestamp'], unit='ms')
-    pair.set_index('timestamp', inplace=True)
-
+def plot_daily_prices(cryptos, exchange=exchange):
+    symbols = [crypto + '/USDT' for crypto in cryptos]
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=pair.index, y=pair['close'], mode='lines+markers', name=symbol))
+
+    for symbol in symbols:
+        pair = exchange.fetch_ohlcv(symbol, '1M', limit=None)
+
+        pair = pd.DataFrame(pair, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        pair['timestamp'] = pd.to_datetime(pair['timestamp'], unit='ms')
+        pair.set_index('timestamp', inplace=True)
+    
+        fig.add_trace(go.Scatter(x=pair.index, y=pair['close'], mode='lines+markers', name=symbol))
+    
     fig.update_layout(showlegend=True)
     fig.show()
 
@@ -45,7 +48,7 @@ def get_daily_prices_dict(start_date, end_date=None, symbols=symbols, exchange=e
 
     for symbol in symbols:
         # from start_date to today
-        pair = exchange.fetch_ohlcv(symbol, '1d', since=int(start_date.timestamp()*1000))
+        pair = exchange.fetch_ohlcv(symbol, '1M', since=int(start_date.timestamp()*1000), limit=None)
         pair = pd.DataFrame(pair, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
         pair.rename(columns={'close': 'price'}, inplace=True)
         pair.drop(columns=['open', 'high', 'low', 'volume'], inplace=True)
