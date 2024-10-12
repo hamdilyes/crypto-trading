@@ -16,11 +16,11 @@ def add_dict_df_emas(dict_df, lengths=[12, 21]):
         
         dict_df[symbol]['Signal_EMA_12_21'] = pd.DataFrame(values, index=df.index, columns=['Signal_EMA_12_21'])
 
-        # distance between EMAs
-        dict_df[symbol]['Distance_EMA_12_21'] = dict_df[symbol]['EMA_12'] - dict_df[symbol]['EMA_21']
+        dict_df[symbol]['Delta_EMA_12_21'] = dict_df[symbol]['EMA_12'] - dict_df[symbol]['EMA_21']
 
-        # relative distance between EMAs
-        dict_df[symbol]['Relative_Distance_EMA_12_21'] = dict_df[symbol]['Distance_EMA_12_21'] / (np.abs(dict_df[symbol]['Distance_EMA_12_21']).max()) * 100
+        dict_df[symbol]['Rel_Delta_EMA_12_21'] = dict_df[symbol]['Delta_EMA_12_21'] / (np.abs(dict_df[symbol]['EMA_21']))
+
+        dict_df[symbol]['Ratio_EMA_12_21'] = (dict_df[symbol]['EMA_12'] / dict_df[symbol]['EMA_21'] - 1)*100
     
     return dict_df
 

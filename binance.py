@@ -13,8 +13,14 @@ def get_binance():
 
 exchange, markets, symbols = get_binance()
 
-start_date = '2024-01-01'
-end_date = '2024-06-30'
+# start_date = '2024-01-01'
+# end_date = '2024-06-30'
+
+# start_date = '2023-07-01'
+# end_date = '2023-12-31'
+
+start_date = '2023-01-01'
+end_date = '2024-09-30'
 
 
 def plot_prices(cryptos, freq, exchange=exchange, start_date=start_date, end_date=end_date):
@@ -71,8 +77,8 @@ def plot_df(df):
                 mode = 'lines'
             fig.add_trace(go.Scatter(x=df.index, y=df[c], mode=mode, name=c))
         
-        fig.update_layout(showlegend=True)
-        fig.show()
+    fig.update_layout(showlegend=True)
+    fig.show()
 
 
 def custom_fetch_ohlcv(exchange, symbol, freq, start_date, end_date):
