@@ -1,4 +1,4 @@
-from binance import get_binance
+from old2.binance import get_binance
 
 
 exchange, markets, symbols = get_binance()

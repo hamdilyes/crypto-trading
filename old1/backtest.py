@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 
-from binance import get_daily_prices_dict, get_binance
+from old2.binance import get_daily_prices_dict, get_binance
 from strategy_0 import get_strategy_0
 from strategy_1 import get_strategy_1
 

@@ -13,8 +13,18 @@ def get_binance():
 
 exchange, markets, symbols = get_binance()
 
+# start_date = '2024-01-01'
+# end_date = '2024-06-30'
 
-def plot_prices(symbols, freq, start_date, end_date, exchange=exchange):
+# start_date = '2023-07-01'
+# end_date = '2023-12-31'
+
+start_date = '2023-01-01'
+end_date = '2024-01-01'
+
+
+def plot_prices(cryptos, freq, exchange=exchange, start_date=start_date, end_date=end_date):
+    symbols = [crypto + '/USDT' for crypto in cryptos]
     fig = go.Figure()
 
     for symbol in symbols:
@@ -26,7 +36,7 @@ def plot_prices(symbols, freq, start_date, end_date, exchange=exchange):
     fig.show()
 
 
-def get_dict_df(symbols, freq, start_date, end_date, columns=None, exchange=exchange):
+def get_dict_df(symbols, freq, columns=None, exchange=exchange, start_date=start_date, end_date=end_date):
     prices = {}
 
     for symbol in symbols:
@@ -40,14 +50,31 @@ def get_dict_df(symbols, freq, start_date, end_date, columns=None, exchange=exch
 
 
 def plot_df(df):
-    colors={'EMA_12': 'green', 'EMA_21': 'red'}
     fig = go.Figure()
 
     for c in df.columns:
-        mode = 'lines'
-        if c in colors:
-            fig.add_trace(go.Scatter(x=df.index, y=df[c], mode=mode, name=c, line=dict(color=colors[c])))
+        if 'Signal' in c:
+            ymin = df['close'].min()
+            ymax = df['close'].max()
+
+            for x in df.index[df[c] == 1]:
+                fig.add_trace(go.Scatter(
+                    x=[x, x],
+                    y=[ymin, ymax],
+                    mode='lines',
+                    line=dict(color='green')))
+
+            for x in df.index[df[c] == -1]:
+                fig.add_trace(go.Scatter(
+                    x=[x, x],
+                    y=[ymin, ymax],
+                    mode='lines',
+                    line=dict(color='red')))
+
         else:
+            mode = 'lines+markers'
+            if c not in ['open', 'high', 'low', 'close']:
+                mode = 'lines'
             fig.add_trace(go.Scatter(x=df.index, y=df[c], mode=mode, name=c))
         
     fig.update_layout(showlegend=True)
