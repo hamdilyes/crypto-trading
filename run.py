@@ -3,7 +3,7 @@ from ta import *
 from backtest import *
 
 
-def run(symbol, start_date, end_date, investment=1000, frequencies=['4h'], shorts=False, strategies=['Signal_EMA_12_21', 'Signal_Ratio_EMA_12_21']):
+def run(symbol, start_date, end_date, investment=1000, frequencies=['4h'], shorts=False, strategies=['Signal_EMA_12_21', 'Signal_Ratio_EMA_12_21'], live=False):
 
     df_freq, df_plot_freq, trades_freq, pnl_freq, pnl_live_freq = {}, {}, {}, {}, {}
     for freq in frequencies:
@@ -30,21 +30,22 @@ def run(symbol, start_date, end_date, investment=1000, frequencies=['4h'], short
                 pnl[signal] = pnl[signal][[f'{freq}_{signal}']]
 
             # make it live
-            dff = pd.DataFrame(index=df.index)
-            dff['close'] = df['close']
-            dff['cash'] = np.nan
-            dff['btc'] = 0
-            for idx, row in pnl[signal].iterrows():
-                name = f'{freq}_{signal}' if signal != 'Buy_Hold' else f'{signal}'
-                dff.loc[idx, 'cash'] = row[name]
-            dff.fillna(method='ffill', inplace=True)
-            for _, row in trades[signal].iterrows():
-                dff.loc[row['entry_timestamp']: row['exit_timestamp'], 'btc'] = investment*dff.loc[row['entry_timestamp']: row['exit_timestamp'], 'close']/dff.loc[row['entry_timestamp'], 'close']
-                dff.loc[row['entry_timestamp']: row['exit_timestamp'], 'cash'] -= investment
-            dff['live'] = dff['cash'] + dff['btc']
-            dff = dff[['live']]
-            dff.columns = [name]
-            pnl_live[signal] = dff
+            if live:
+                dff = pd.DataFrame(index=df.index)
+                dff['close'] = df['close']
+                dff['cash'] = np.nan
+                dff['btc'] = 0
+                for idx, row in pnl[signal].iterrows():
+                    name = f'{freq}_{signal}' if signal != 'Buy_Hold' else f'{signal}'
+                    dff.loc[idx, 'cash'] = row[name]
+                dff.fillna(method='ffill', inplace=True)
+                for _, row in trades[signal].iterrows():
+                    dff.loc[row['entry_timestamp']: row['exit_timestamp'], 'btc'] = investment*dff.loc[row['entry_timestamp']: row['exit_timestamp'], 'close']/dff.loc[row['entry_timestamp'], 'close']
+                    dff.loc[row['entry_timestamp']: row['exit_timestamp'], 'cash'] -= investment
+                dff['live'] = dff['cash'] + dff['btc']
+                dff = dff[['live']]
+                dff.columns = [name]
+                pnl_live[signal] = dff
 
         # save to dict
         df_freq[freq] = df
@@ -56,10 +57,12 @@ def run(symbol, start_date, end_date, investment=1000, frequencies=['4h'], short
     pnl_concat = pd.concat([pnl_freq[freq][signal] for freq in frequencies for signal in strategies], axis=1)
     pnl_concat.fillna(method='ffill', inplace=True)
 
-    pnl_live_concat = pd.concat([pnl_live_freq[freq][signal] for freq in frequencies for signal in strategies], axis=1)
-    pnl_live_concat.fillna(method='ffill', inplace=True)
+    if live:
+        pnl_live_concat = pd.concat([pnl_live_freq[freq][signal] for freq in frequencies for signal in strategies], axis=1)
+        pnl_live_concat.fillna(method='ffill', inplace=True)
+        return df_freq, df_plot_freq, trades_freq, pnl_freq, pnl_concat, pnl_live_concat
 
-    return df_freq, df_plot_freq, trades_freq, pnl_freq, pnl_concat, pnl_live_concat
+    return df_freq, df_plot_freq, trades_freq, pnl_freq, pnl_concat, None
 
 
 # def live(df_freq, trades_freq, pnl_freq):
