@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 # Replace with your API key and secret
-api_key = 'N82BEv4mWswNOxPa7FEN602VOfnn1N2XS6tF83eqoKO5Z43NBrmuGCjXGfewMoHE'
+api_key = 'API-KEY'
 api_secret = 'SECRET-API-KEY'
 
 client = Client(api_key, api_secret)
